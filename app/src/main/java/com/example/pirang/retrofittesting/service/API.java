@@ -2,13 +2,16 @@ package com.example.pirang.retrofittesting.service;
 
 import com.example.pirang.retrofittesting.MyResponse;
 import com.google.gson.JsonObject;
-
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 
 /**
@@ -18,7 +21,6 @@ import retrofit2.http.Path;
 public class API {
 
     public interface ArticleService {
-
         @GET("/v1/api/articles")
         Call<MyResponse> getArticles();
 
@@ -30,6 +32,20 @@ public class API {
 
         @PUT("/v1/api/articles/{id}")
         Call<JsonObject> updateArticle(@Body MyResponse.Data newArticle, @Path("id") Integer id);
+    }
+
+    public interface UserService{
+        @Multipart
+        @POST("/v1/api/users")
+        Call<JsonObject> addUser(
+                @Part("EMAIL") RequestBody email,
+                @Part("NAME") RequestBody name,
+                @Part("PASSWROD") RequestBody pwd,
+                @Part("GENDER") RequestBody gender,
+                @Part("TELEPHONE") RequestBody tel,
+                @Part("FACEBOOK_ID") RequestBody id,
+                @Part MultipartBody.Part file
+        );
     }
 
 }

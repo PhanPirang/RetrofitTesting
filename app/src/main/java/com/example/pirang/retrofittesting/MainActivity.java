@@ -1,5 +1,7 @@
 package com.example.pirang.retrofittesting;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -7,6 +9,13 @@ import android.util.Log;
 import com.example.pirang.retrofittesting.service.API;
 import com.google.gson.JsonObject;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -27,7 +36,8 @@ public class MainActivity extends AppCompatActivity {
         //addArticle();
         getArticles();
         //deleteArticle(340);
-        updateArticle();
+        //updateArticle();
+        addUser();
 
     }
 
@@ -87,6 +97,39 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 Log.e("ooooo", "PUT => " + response.body().toString());
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                t.printStackTrace();
+            }
+        });
+    }
+
+    void addUser(){
+        API.UserService userService = ServiceGenerator.createService(API.UserService.class);
+
+        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+        File file = BitmapEfficient.persistImage(bmp, this);
+
+        // create RequestBody instance from file
+        RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+
+        // MultipartBody.Part is used to send also the actual file name
+        MultipartBody.Part body = MultipartBody.Part.createFormData("picture", file.getName(), requestFile);
+
+        // add another part within the multipart request
+        RequestBody email = RequestBody.create(MediaType.parse("multipart/form-data"), "a");
+        RequestBody name = RequestBody.create(MediaType.parse("multipart/form-data"), "c");
+        RequestBody pwd = RequestBody.create(MediaType.parse("multipart/form-data"), "dsfsdfsd");
+        RequestBody gender = RequestBody.create(MediaType.parse("multipart/form-data"), "f");
+        RequestBody tel = RequestBody.create(MediaType.parse("multipart/form-data"), "123123123");
+        RequestBody fb = RequestBody.create(MediaType.parse("multipart/form-data"), "12312312321");
+        Call<JsonObject> call = userService.addUser(email, name, pwd, gender, tel, fb, body);
+        call.enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                Log.e("ooooo", "DELETE => " + response.body().toString());
             }
 
             @Override

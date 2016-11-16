@@ -62,9 +62,6 @@ public class MyResponse {
         public Category category;
         @SerializedName("IMAGE")
         public String image;
-
-        @SerializedName("PAGINATION")
-        public Pagination pagination;
     }
 
     public static class Pagination {
