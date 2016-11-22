@@ -128,7 +128,9 @@ public class MainActivity extends AppCompatActivity {
             Log.e("ooooo", myResponse.data.get(0).author.id + "");
 
                 if (myResponse.data.get(0).pagination == null){
-                    
+                    Log.e("ooooo", "NULL");
+                } else {
+                    Log.e("ooooo", "NOT NULL");
                 }
             }
 
