@@ -14,26 +14,32 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.esafirm.imagepicker.features.ImagePicker;
+import com.esafirm.imagepicker.model.Image;
 import com.example.pirang.retrofittesting.service.API;
+import com.example.pirang.retrofittesting.service.ServiceGenerator;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String API_BASE_URL = "http://120.136.24.174:1301/";
+    public static final String AMS_API_BASE_URL = "http://120.136.24.174:1301/";
     private static final int PICK_IMAGE = 1;
+    private static final int REQUEST_CODE_PICKER = 0;
     private API.ArticleService service;
 
     private static final int REQUEST_CODE = 0x11;
@@ -46,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    private ArrayList<Image> images = new ArrayList<>();
+    private TextView textview;
 
     /**
      * Checks if the app has permission to write to device storage
@@ -73,6 +82,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        textview = (TextView) findViewById(R.id.textview);
+
         Button btn = (Button) findViewById(R.id.button);
         if (btn != null) {
             btn.setOnClickListener(new View.OnClickListener() {
@@ -87,6 +98,24 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
+        findViewById(R.id.multiple_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ImagePicker.create(MainActivity.this)
+                        .returnAfterCapture(false) // set whether camera action should return immediate result or not
+                        .folderMode(true) // set folder mode (false by default)
+                        .folderTitle("Folder") // folder selection title
+                        .imageTitle("Tap to select") // image selection title
+                        .single() // single mode
+                        .multi() // multi mode (default mode)
+                        .limit(10) // max images can be selected (99 by default)
+                        .showCamera(true) // show camera or not (true by default)
+                        .imageDirectory("Camera")   // captured image directory name ("Camera" folder by default)
+                        .origin(images) // original selected images, used in multi mode
+                        .start(REQUEST_CODE_PICKER); // start image picker activity with request code
+            }
+        });
+
         //getArticles();
         service = ServiceGenerator.createService(API.ArticleService.class);
         //addArticle();
@@ -97,9 +126,65 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void printImages(List<Image> images) {
+        if (images == null) return;
+
+        StringBuilder stringBuffer = new StringBuilder();
+        for (int i = 0, l = images.size(); i < l; i++) {
+            stringBuffer.append(images.get(i).getPath()).append("\n");
+        }
+        Log.e("ooooo", "PATH => " + stringBuffer.toString());
+
+    }
+
+
+
+    ///// Test upload array of image
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_PICKER && resultCode == RESULT_OK && data != null) {
+            images = (ArrayList<Image>) ImagePicker.getImages(data);
+            //printImages(images);
+
+            List<MultipartBody.Part> menus = new ArrayList<>();
+            List<MultipartBody.Part> restaurants = new ArrayList<>();
+
+            for(Image image : images){
+                File file = new File(image.getPath());
+                RequestBody reqFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                MultipartBody.Part body = MultipartBody.Part.createFormData("MENU", file.getName(), reqFile);
+                menus.add(body);
+            }
+
+            for(Image image : images){
+                File file = new File(image.getPath());
+                RequestBody reqFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+                MultipartBody.Part body = MultipartBody.Part.createFormData("RESTAURANT", file.getName(), reqFile);
+                restaurants.add(body);
+            }
+
+            RequestBody name = RequestBody.create(MediaType.parse("text/plain"), "Khmer");
+            API.RestaurantService restaurantService = ServiceGenerator.createService(API.RestaurantService.class);
+            Call<JsonObject> call = restaurantService.addRestaurants(name, restaurants, menus);
+            call.enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    Log.e("ooooo", "POST Restaurant => " + response.body().toString() + "");
+                    textview.setText(response.body().toString());
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+
+
+        }
+
         if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK) {
 
             android.net.Uri selectedImage = data.getData();
@@ -179,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<MyResponse> call, Response<MyResponse> response) {
                 MyResponse myResponse = response.body();
-                Log.e("ooooo", "GET => " + myResponse.data.get(0).id + "");
+                Log.e("ooooo", "GET Article=> " + myResponse.data.get(0).id + "");
             }
 
             @Override
@@ -250,11 +335,12 @@ public class MainActivity extends AppCompatActivity {
 
         // create RequestBody instance from file
         //RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+        //RequestBody requestFile = RequestBody.create(MediaType.parse("*/*"), file);
 
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
 
         // MultipartBody.Part is used to send also the actual file name
-        MultipartBody.Part body = MultipartBody.Part.createFormData("picture", file.getName(), requestFile);
+        MultipartBody.Part body = MultipartBody.Part.createFormData("PHOTO", file.getName(), requestFile);
 
         // add another part within the multipart request
         RequestBody email = RequestBody.create(MediaType.parse("text/plain"), "a");

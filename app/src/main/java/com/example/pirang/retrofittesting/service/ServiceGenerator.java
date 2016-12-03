@@ -1,4 +1,4 @@
-package com.example.pirang.retrofittesting;
+package com.example.pirang.retrofittesting.service;
 
 import android.app.Application;
 
@@ -18,12 +18,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ServiceGenerator {
 
-    public static final String API_BASE_URL = "http://120.136.24.174:1301";
+    public static final String AMS_API_BASE_URL = "http://120.136.24.174:1301";
 
     private static OkHttpClient.Builder httpClient = new OkHttpClient.Builder();
 
     private static Retrofit.Builder builder = new Retrofit.Builder()
-            .baseUrl(API_BASE_URL)
+            .baseUrl(AMS_API_BASE_URL)
             .addConverterFactory(GsonConverterFactory.create());
 
     public static <S> S createService(Class<S> serviceClass) {
@@ -39,7 +39,7 @@ public class ServiceGenerator {
                     Request original = chain.request();
 
                     Request.Builder requestBuilder = original.newBuilder()
-                            .header("Authorization", "Basic QU1TQVBJQURNSU46QU1TQVBJUEBTU1dPUkQ=")
+                            .addHeader("Authorization", "Basic QU1TQVBJQURNSU46QU1TQVBJUEBTU1dPUkQ=")
                             .header("Accept", "application/json")
                             .method(original.method(), original.body());
 
